@@ -11,7 +11,7 @@ void pdg::PTAWrapper::setupPTA(Module &M)
   _ander_pta = AndersenWaveDiff::createAndersenWaveDiff(pag);
 }
 
-AliasResult pdg::PTAWrapper::queryAlias(Value &v1, Value &v2)
+AliasResult pdg::PTAWrapper::queryAlias(const Value &v1, const Value &v2)
 {
   assert(_ander_pta != nullptr && "cannot obtain ander pointer analysis!\n");
   return _ander_pta->alias(&v1, &v2);

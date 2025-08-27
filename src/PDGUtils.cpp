@@ -1018,6 +1018,14 @@ std::string pdg::pdgutils::edgeTypeToString(EdgeType edgeType)
     return "DATA_DEF_USE";
   case EdgeType::DATA_RAW:
     return "DATA_RAW";
+  case EdgeType::DATA_DEF_USE_LOAD:
+    return "DATA_DEF_USE_LOAD";
+  case EdgeType::DATA_DEF_USE_GEP:
+    return "DATA_DEF_USE_GEP";
+  case EdgeType::DATA_DEF_USE_CAST:
+    return "DATA_DEF_USE_CAST";
+  case EdgeType::DATA_DEF_USE_ARITH:
+    return "DATA_DEF_USE_ARITH";
   case EdgeType::DATA_MAY_ALIAS:
     return "DATA_MAY_ALIAS";
   case EdgeType::DATA_MUST_ALIAS:
@@ -1028,6 +1036,8 @@ std::string pdg::pdgutils::edgeTypeToString(EdgeType edgeType)
     return "DATA_RET";
   case EdgeType::DATA_STORE_TO:
     return "DATA_ST";
+  case EdgeType::DATA_EQUL_OBJ:
+    return "DATA_EQUL_OBJ";
   case EdgeType::PARAMETER_IN:
     return "PARAMETER_IN";
   case EdgeType::PARAMETER_IN_REV:
