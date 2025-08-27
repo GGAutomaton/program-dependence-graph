@@ -365,11 +365,26 @@ void pdg::ProgramDependencyGraph::connectFormalInTreeWithAddrVars(Tree &formalIn
     }
 
     auto nodeDIType = currentNode->getDIType();
+
+    std::queue<Node *> workQueue;
+    std::unordered_set<Node *> isVisited;
+
     for (auto addrVar : currentNode->getAddrVars())
     {
       if (!_PDG->hasNode(*addrVar))
         continue;
       auto addrVarNode = _PDG->getNode(*addrVar);
+      workQueue.push(addrVarNode);
+    }
+    while (!workQueue.empty())
+    {
+      auto *addrVarNode = workQueue.front();
+      auto *addrVar = addrVarNode->getValue();
+      workQueue.pop();
+      if (isVisited.find(addrVarNode) != isVisited.end())
+        continue;
+      isVisited.insert(addrVarNode);
+      currentNode->addAddrVar(*addrVar);
       currentNode->addNeighbor(*addrVarNode, EdgeType::PARAMETER_IN);
       // adding alias vars to tree's address var set
       auto aliasNodes = getAliasNodes(*addrVarNode);
@@ -387,8 +402,7 @@ void pdg::ProgramDependencyGraph::connectFormalInTreeWithAddrVars(Tree &formalIn
             if (nodeDIType && !pdgutils::isGEPOffsetMatchDIOffset(*nodeDIType, *gep))
               continue;
         }
-        currentNode->addAddrVar(*aliasNodeVal);
-        currentNode->addNeighbor(*aliasNode, EdgeType::PARAMETER_IN);
+        workQueue.push(aliasNode);
       }
     }
   }
@@ -403,16 +417,31 @@ void pdg::ProgramDependencyGraph::connectFormalOutTreeWithAddrVars(Tree &formalO
   {
     TreeNode *currentNode = nodeQueue.front();
     nodeQueue.pop();
+
+    std::queue<Node *> workQueue;
+    std::unordered_set<Node *> isVisited;
+
     for (auto addrVar : currentNode->getAddrVars())
     {
       if (!_PDG->hasNode(*addrVar))
         continue;
       auto addrVarNode = _PDG->getNode(*addrVar);
+      workQueue.push(addrVarNode);
+    }
+    while (!workQueue.empty())
+    {
+      auto *addrVarNode = workQueue.front();
+      auto *addrVar = addrVarNode->getValue();
+      workQueue.pop();
+      if (isVisited.find(addrVarNode) != isVisited.end())
+        continue;
+      isVisited.insert(addrVarNode);
       // TODO: add addr variables for formal out tree
       if (pdgutils::hasWriteAccess(*addrVar))
       {
         currentNode->addAccessTag(AccessTag::DATA_WRITE);
       }
+      currentNode->addAddrVar(*addrVar);
       addrVarNode->addNeighbor(*currentNode, EdgeType::PARAMETER_OUT); // currently linking all
     }
 
@@ -435,6 +464,10 @@ void pdg::ProgramDependencyGraph::connectActualInTreeWithAddrVars(Tree &actualIn
   {
     TreeNode *currentNode = nodeQueue.front();
     nodeQueue.pop();
+
+    std::queue<Node *> workQueue;
+    std::unordered_set<Node *> isVisited;
+
     for (auto addrVar : currentNode->getAddrVars())
     {
       // only connect addrVar that are pred to the call site
@@ -446,7 +479,19 @@ void pdg::ProgramDependencyGraph::connectActualInTreeWithAddrVars(Tree &actualIn
       if (!_PDG->hasNode(*addrVar))
         continue;
       auto addrVarNode = _PDG->getNode(*addrVar);
+      workQueue.push(addrVarNode);
+    }
+    while (!workQueue.empty())
+    {
+      auto *addrVarNode = workQueue.front();
+      auto *addrVar = addrVarNode->getValue();
+      workQueue.pop();
+      if (isVisited.find(addrVarNode) != isVisited.end())
+        continue;
+      isVisited.insert(addrVarNode);
+      currentNode->addAddrVar(*addrVar);
       addrVarNode->addNeighbor(*currentNode, EdgeType::PARAMETER_IN);
+
       // auto accessPath = currentNode->getSrcName();
       // errs() << "connecting " << accessPath << " - " << ci.getFunction()->getName().str() << " - " << *addrVar << "\n";
       // if (auto inst = dyn_cast<Instruction>(addrVar))
@@ -481,17 +526,33 @@ void pdg::ProgramDependencyGraph::connectActualOutTreeWithAddrVars(Tree &actualO
   {
     TreeNode *currentNode = nodeQueue.front();
     nodeQueue.pop();
+
+    std::queue<Node *> workQueue;
+    std::unordered_set<Node *> isVisited;
+
     for (auto addrVar : currentNode->getAddrVars())
     {
+      if (!_PDG->hasNode(*addrVar))
+        continue;
+      auto addrVarNode = _PDG->getNode(*addrVar);
+      workQueue.push(addrVarNode);
+    }
+    while (!workQueue.empty())
+    {
+      auto *addrVarNode = workQueue.front();
+      auto *addrVar = addrVarNode->getValue();
+      workQueue.pop();
+      if (isVisited.find(addrVarNode) != isVisited.end())
+        continue;
+      isVisited.insert(addrVarNode);
+      currentNode->addAddrVar(*addrVar);
+
       // only connect with succe insts of call sites
       if (Instruction *i = dyn_cast<Instruction>(addrVar))
       {
         if (insts_after_ci.find(i) == insts_after_ci.end())
           continue;
       }
-      if (!_PDG->hasNode(*addrVar))
-        continue;
-      auto addrVarNode = _PDG->getNode(*addrVar);
       currentNode->addNeighbor(*addrVarNode, EdgeType::PARAMETER_OUT);
     }
 
