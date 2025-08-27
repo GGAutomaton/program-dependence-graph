@@ -121,8 +121,8 @@ void pdg::ProgramDependencyGraph::connectOutTrees(Tree *src_tree, Tree *dstTree,
     TreeNode *src = current_node_pair.first;
     TreeNode *dst = current_node_pair.second;
     assert(src->numOfChild() == dst->numOfChild());
-    if (src->hasWriteAccess())
-      src->addNeighbor(*dst, edgeTy);
+    // if (src->hasWriteAccess()) // currently linking all
+    src->addNeighbor(*dst, edgeTy);
     auto src_node_children = src->getChildNodes();
     auto dst_node_children = dst->getChildNodes();
     for (int i = 0; i < src->numOfChild(); i++)
@@ -411,9 +411,9 @@ void pdg::ProgramDependencyGraph::connectFormalOutTreeWithAddrVars(Tree &formalO
       // TODO: add addr variables for formal out tree
       if (pdgutils::hasWriteAccess(*addrVar))
       {
-        addrVarNode->addNeighbor(*currentNode, EdgeType::PARAMETER_OUT);
         currentNode->addAccessTag(AccessTag::DATA_WRITE);
       }
+      addrVarNode->addNeighbor(*currentNode, EdgeType::PARAMETER_OUT); // currently linking all
     }
 
     if (!FieldSensitive)
